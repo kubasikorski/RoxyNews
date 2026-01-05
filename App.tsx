@@ -39,11 +39,6 @@ const App: React.FC = () => {
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Live RSS Stream</p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-3">
-             <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-slate-500">Auto-Digest Active</span>
-          </div>
         </div>
       </header>
 
@@ -116,7 +111,7 @@ const App: React.FC = () => {
       <footer className="w-full border-t border-slate-100 py-12 px-6 bg-slate-50/50">
         <div className="max-w-3xl mx-auto text-center">
           <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">
-            Koniec wiadomości • {new Date().getFullYear()}
+            CubeDev • {new Date().getFullYear()}
           </p>
         </div>
       </footer>
