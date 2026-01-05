@@ -3,17 +3,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { RSSFeed } from './types';
 import { fetchFeed, ROKSANA_FEED_URL } from './services/rssService';
 
-// Declaration for SmtpJS global object
-declare const Email: any;
-
 const App: React.FC = () => {
   const [feed, setFeed] = useState<RSSFeed | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [showMailModal, setShowMailModal] = useState<boolean>(false);
-  const [recipient, setRecipient] = useState<string>('');
-  const [sendingEmail, setSendingEmail] = useState<boolean>(false);
-  const [mailStatus, setMailStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const loadFeed = useCallback(async () => {
     setLoading(true);
@@ -32,87 +25,6 @@ const App: React.FC = () => {
     loadFeed();
   }, [loadFeed]);
 
-  const handleSmtpSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!feed || !recipient) return;
-
-    // Safety check for SmtpJS
-    if (typeof Email === 'undefined') {
-      setMailStatus({ type: 'error', message: 'Biblioteka SMTP nie została załadowana. Sprawdź połączenie internetowe.' });
-      return;
-    }
-
-    setSendingEmail(true);
-    setMailStatus(null);
-
-    const dateStr = new Date().toLocaleDateString('pl-PL');
-    const subject = `Roxie News Digest - ${dateStr}`;
-    
-    // Create a "nice" HTML summary
-    let htmlBody = `
-      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; border: 1px solid #f1f5f9; border-radius: 20px; overflow: hidden;">
-        <div style="background-color: #22c55e; padding: 30px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 28px; letter-spacing: -1px;">Roxie News Digest</h1>
-          <p style="color: #dcfce7; margin-top: 5px; font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: 2px;">Daily updates about Roksana Węgiel</p>
-        </div>
-        <div style="padding: 30px; background-color: #ffffff;">
-          <p style="color: #64748b; font-size: 14px; margin-bottom: 30px;">Cześć! Oto Twoje codzienne zestawienie najnowszych informacji o Roksanie Węgiel z dnia <strong>${dateStr}</strong>.</p>
-    `;
-
-    feed.items.slice(0, 8).forEach((item, idx) => {
-      htmlBody += `
-        <div style="margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px;">
-          <div style="display: flex; align-items: center; margin-bottom: 10px;">
-             <span style="background-color: #f0fdf4; color: #166534; font-weight: bold; font-size: 10px; padding: 4px 8px; border-radius: 6px; text-transform: uppercase;">${item.author || 'News'}</span>
-             <span style="color: #94a3b8; font-size: 11px; margin-left: 10px;">${new Date(item.pubDate).toLocaleDateString('pl-PL')}</span>
-          </div>
-          <h2 style="font-size: 18px; margin: 0 0 10px 0; line-height: 1.4;">
-            <a href="${item.link}" style="color: #0f172a; text-decoration: none; font-weight: bold;">${item.title}</a>
-          </h2>
-          <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 15px 0;">
-            ${item.description.replace(/<[^>]*>/g, '').substring(0, 180)}...
-          </p>
-          <a href="${item.link}" style="display: inline-block; background-color: #0f172a; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 12px; font-weight: bold;">Czytaj artykuł</a>
-        </div>
-      `;
-    });
-
-    htmlBody += `
-          <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px dashed #f1f5f9;">
-            <p style="color: #94a3b8; font-size: 12px;">Dziękujemy, że jesteś z nami!</p>
-            <p style="color: #cbd5e1; font-size: 10px;">Wiadomość wygenerowana automatycznie przez aplikację Roxie News Digest.</p>
-          </div>
-        </div>
-      </div>
-    `;
-
-    try {
-      const response = await Email.send({
-        Host: "mail53.mydevil.net",
-        Username: "news@roxynews.pl",
-        Password: "3Hnt43-uuWg0!u1Lp8ifc_aF<6ebng",
-        To: recipient,
-        From: "news@roxynews.pl",
-        Subject: subject,
-        Body: htmlBody,
-      });
-
-      if (response === "OK") {
-        setMailStatus({ type: 'success', message: 'Wiadomość została wysłana pomyślnie!' });
-        setTimeout(() => {
-          setShowMailModal(false);
-          setMailStatus(null);
-        }, 2500);
-      } else {
-        throw new Error(response);
-      }
-    } catch (err: any) {
-      setMailStatus({ type: 'error', message: `Błąd wysyłki: ${err.message || 'Spróbuj ponownie.'}` });
-    } finally {
-      setSendingEmail(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-white flex flex-col items-center selection:bg-green-100 selection:text-green-900">
       {/* Simple Header */}
@@ -128,15 +40,10 @@ const App: React.FC = () => {
             </div>
           </div>
           
-          {!loading && feed && (
-            <button
-              onClick={() => setShowMailModal(true)}
-              className="bg-slate-900 hover:bg-black text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-lg transition-all flex items-center gap-2 group"
-            >
-              <i className="fa-solid fa-envelope group-hover:scale-110 transition-transform"></i>
-              Wyślij zestawienie
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+             <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-slate-500">Auto-Digest Active</span>
+          </div>
         </div>
       </header>
 
@@ -205,62 +112,6 @@ const App: React.FC = () => {
           )}
         </div>
       </main>
-
-      {/* Mail Modal */}
-      {showMailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black text-slate-900">Wyślij Digest</h3>
-              <button onClick={() => setShowMailModal(false)} className="text-slate-300 hover:text-slate-900 transition-colors">
-                <i className="fa-solid fa-circle-xmark text-2xl"></i>
-              </button>
-            </div>
-
-            <form onSubmit={handleSmtpSend} className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">E-mail odbiorcy</label>
-                <input
-                  autoFocus
-                  required
-                  type="email"
-                  value={recipient}
-                  onChange={(e) => setRecipient(e.target.value)}
-                  placeholder="np. fan@example.com"
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 transition-all text-slate-900"
-                />
-              </div>
-
-              {mailStatus && (
-                <div className={`p-4 rounded-2xl text-sm font-medium ${
-                  mailStatus.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'
-                }`}>
-                  {mailStatus.message}
-                </div>
-              )}
-
-              <button
-                disabled={sendingEmail}
-                type="submit"
-                className="w-full bg-green-500 hover:bg-green-600 disabled:bg-slate-200 text-white font-black py-4 rounded-2xl shadow-xl shadow-green-100 transition-all flex items-center justify-center gap-3 mt-4"
-              >
-                {sendingEmail ? (
-                  <i className="fa-solid fa-circle-notch animate-spin"></i>
-                ) : (
-                  <>
-                    <i className="fa-solid fa-paper-plane"></i>
-                    Wyślij przez SMTP
-                  </>
-                )}
-              </button>
-              
-              <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest mt-6">
-                Zasila: mail53.mydevil.net
-              </p>
-            </form>
-          </div>
-        </div>
-      )}
 
       <footer className="w-full border-t border-slate-100 py-12 px-6 bg-slate-50/50">
         <div className="max-w-3xl mx-auto text-center">
